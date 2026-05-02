@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Home, ClipboardList, Users, StickyNote, Settings, Menu, X, Moon, Sun } from 'lucide-react';
+import { Home, ClipboardList, Users, StickyNote, Settings, Menu, X, Moon, Sun, History as HistoryIcon } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
@@ -21,9 +21,10 @@ const MainLayout: React.FC = () => {
 
   const navItems = [
     { path: '/', label: 'Accueil', icon: <Home size={24} /> },
-    { path: '/carte', label: 'Carte & Addition', icon: <ClipboardList size={24} /> },
+    { path: '/carte', label: 'Carte', icon: <ClipboardList size={24} /> },
+    { path: '/history', label: 'Historique', icon: <HistoryIcon size={24} /> },
     { path: '/clients', label: 'Clients', icon: <Users size={24} /> },
-    { path: '/notes', label: 'Nouvelles Notes', icon: <StickyNote size={24} /> },
+    { path: '/notes', label: 'Notes', icon: <StickyNote size={24} /> },
     { path: '/settings', label: 'Paramètres', icon: <Settings size={24} /> },
   ];
 

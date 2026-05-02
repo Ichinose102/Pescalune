@@ -3,8 +3,26 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply transition-colors duration-300;
+  }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-vert-olive hover:bg-vert-foret text-white px-6 py-2 rounded-xl transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 font-bold;
+  }
+  .card {
+    @apply bg-white dark:bg-slate-900 border border-vert-sauge/20 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all;
+  }
+  .input-field {
+    @apply w-full p-3 bg-rose-poudre/20 dark:bg-slate-800 border border-vert-sauge/20 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-vert-olive dark:focus:ring-slate-600 transition-all text-vert-foret dark:text-slate-100;
   }
 }
 
@@ -28,5 +46,28 @@
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     @apply bg-vert-sauge/50;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .skeleton {
+    @apply bg-rose-poudre/50 dark:bg-slate-800 animate-pulse-slow rounded;
   }
 }

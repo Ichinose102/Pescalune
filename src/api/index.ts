@@ -11,6 +11,7 @@ const handleResponse = async (res: Response) => {
 export const fetchPrestations = () => fetch(`${API_URL}/prestations`).then(res => res.json());
 export const fetchClients = () => fetch(`${API_URL}/clients`).then(res => res.json());
 export const fetchAdditions = () => fetch(`${API_URL}/additions`).then(res => res.json());
+export const fetchAdditionItems = (id: number) => fetch(`${API_URL}/additions/${id}/items`).then(res => res.json());
 export const fetchNotes = () => fetch(`${API_URL}/notes`).then(res => res.json());
 
 export const createAddition = (addition: any) => fetch(`${API_URL}/additions`, {
@@ -18,6 +19,10 @@ export const createAddition = (addition: any) => fetch(`${API_URL}/additions`, {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(addition)
 }).then(handleResponse).then(res => res.json());
+
+export const deleteAddition = (id: number) => fetch(`${API_URL}/additions/${id}`, {
+  method: 'DELETE'
+}).then(handleResponse);
 
 export const createClient = (client: any) => fetch(`${API_URL}/clients`, {
   method: 'POST',

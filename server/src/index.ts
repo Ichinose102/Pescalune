@@ -45,37 +45,50 @@ app.put('/api/prestations/:id', (req, res) => {
 app.delete('/api/prestations/:id', (req, res) => {
   const { id } = req.params;
   try {
-    // On essaie de supprimer
-    const info = db.prepare('DELETE FROM prestations WHERE id = ?').run(id);
+    // Suppression en cascade manuelle via une transaction pour "forcer" la suppression
+    const deleteTransaction = db.transaction(() => {
+      // 1. Supprimer les liens dans les additions
+      db.prepare('DELETE FROM addition_items WHERE prestation_id = ?').run(id);
+      // 2. Supprimer la prestation elle-même
+      return db.prepare('DELETE FROM prestations WHERE id = ?').run(id);
+    });
+
+    const info = deleteTransaction();
+    
     if (info.changes === 0) {
       return res.status(404).json({ error: "Article non trouvé" });
     }
     res.json({ success: true });
   } catch (error: any) {
     console.error("Delete error:", error);
-    if (error.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
-      return res.status(400).json({ 
-        error: "Cet article est utilisé dans une ou plusieurs additions et ne peut pas être supprimé." 
-      });
-    }
-    res.status(500).json({ error: "Erreur lors de la suppression de l'article." });
+    res.status(500).json({ error: "Erreur lors de la suppression forcée de l'article." });
   }
 });
 
 app.delete('/api/prestations/category/:category', (req, res) => {
   const { category } = req.params;
   try {
-    console.log(`Deleting all prestations in category: ${category}`);
-    const info = db.prepare('DELETE FROM prestations WHERE LOWER(category) = LOWER(?)').run(category);
+    console.log(`Force deleting all prestations in category: ${category}`);
+    const deleteTransaction = db.transaction(() => {
+      // 1. Trouver tous les IDs de la catégorie
+      const prestations = db.prepare('SELECT id FROM prestations WHERE LOWER(category) = LOWER(?)').all() as {id: number}[];
+      const ids = prestations.map(p => p.id);
+      
+      if (ids.length > 0) {
+        // 2. Supprimer les liens pour tous ces articles
+        const placeholders = ids.map(() => '?').join(',');
+        db.prepare(`DELETE FROM addition_items WHERE prestation_id IN (${placeholders})`).run(...ids);
+        // 3. Supprimer les articles
+        return db.prepare('DELETE FROM prestations WHERE LOWER(category) = LOWER(?)').run(category);
+      }
+      return { changes: 0 };
+    });
+
+    const info = deleteTransaction();
     res.json({ deletedCount: info.changes });
   } catch (error: any) {
     console.error("Delete category error:", error);
-    if (error.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
-      return res.status(400).json({ 
-        error: "Certains articles de cette catégorie sont utilisés dans des additions et ne peuvent pas être supprimés." 
-      });
-    }
-    res.status(500).json({ error: "Erreur lors de la suppression de la catégorie." });
+    res.status(500).json({ error: "Erreur lors de la suppression forcée de la catégorie." });
   }
 });
 
@@ -113,6 +126,31 @@ app.get('/api/additions', (req, res) => {
     ORDER BY a.date DESC
   `).all();
   res.json(additions);
+});
+
+app.get('/api/additions/:id/items', (req, res) => {
+  const { id } = req.params;
+  const items = db.prepare(`
+    SELECT ai.*, p.name as prestation_name, p.category as prestation_category
+    FROM addition_items ai
+    JOIN prestations p ON ai.prestation_id = p.id
+    WHERE ai.addition_id = ?
+  `).all(id);
+  res.json(items);
+});
+
+app.delete('/api/additions/:id', (req, res) => {
+  const { id } = req.params;
+  try {
+    const deleteTransaction = db.transaction(() => {
+      db.prepare('DELETE FROM addition_items WHERE addition_id = ?').run(id);
+      return db.prepare('DELETE FROM additions WHERE id = ?').run(id);
+    });
+    deleteTransaction();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur lors de la suppression de l'addition." });
+  }
 });
 
 app.post('/api/additions', (req, res) => {
