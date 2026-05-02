@@ -12,7 +12,7 @@ export const fetchPrestations = () => fetch(`${API_URL}/prestations`).then(res =
 export const fetchClients = () => fetch(`${API_URL}/clients`).then(res => res.json());
 export const fetchAdditions = () => fetch(`${API_URL}/additions`).then(res => res.json());
 export const fetchAdditionItems = (id: number) => fetch(`${API_URL}/additions/${id}/items`).then(res => res.json());
-export const fetchNotes = () => fetch(`${API_URL}/notes`).then(res => res.json());
+
 
 export const createAddition = (addition: any) => fetch(`${API_URL}/additions`, {
   method: 'POST',
@@ -60,12 +60,6 @@ export const deleteCategory = (category: string) => fetch(`${API_URL}/prestation
   method: 'DELETE'
 }).then(handleResponse).then(res => res.json());
 
-export const createNote = (content: string) => fetch(`${API_URL}/notes`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ content })
-}).then(handleResponse).then(res => res.json());
 
-export const deleteNote = (id: number) => fetch(`${API_URL}/notes/${id}`, {
-  method: 'DELETE'
-}).then(handleResponse);
+
+

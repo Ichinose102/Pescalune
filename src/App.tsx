@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import CarteAddition from './pages/CarteAddition';
 import Clients from './pages/Clients';
 import NouvellesNotes from './pages/NouvellesNotes';
+
 import Settings from './pages/Settings';
 import History from './pages/History';
 

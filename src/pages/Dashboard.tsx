@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Users, StickyNote, TrendingUp, Clock, Plus } from 'lucide-react';
-import { fetchAdditions, fetchClients, fetchNotes } from '../api';
+import { ClipboardList, Users, TrendingUp, Clock, Plus } from 'lucide-react';
+import { fetchAdditions, fetchClients } from '../api';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalAdditions: 0,
     totalRevenue: 0,
-    clientCount: 0,
-    noteCount: 0
+    clientCount: 0
   });
   const [recentAdditions, setRecentAdditions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,17 +17,15 @@ const Dashboard: React.FC = () => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const [additions, clients, notes] = await Promise.all([
+        const [additions, clients] = await Promise.all([
           fetchAdditions(),
-          fetchClients(),
-          fetchNotes()
+          fetchClients()
         ]);
 
         setStats({
           totalAdditions: additions.length,
           totalRevenue: additions.reduce((acc: number, curr: any) => acc + curr.total, 0),
-          clientCount: clients.length,
-          noteCount: notes.length
+          clientCount: clients.length
         });
 
         setRecentAdditions(additions.slice(0, 5));
@@ -45,7 +42,7 @@ const Dashboard: React.FC = () => {
     { label: 'Chiffre d\'affaires', value: `${stats.totalRevenue.toFixed(2)}€`, icon: <TrendingUp className="text-vert-olive dark:text-vert-sauge" />, color: 'text-vert-olive' },
     { label: 'Additions validées', value: stats.totalAdditions, icon: <ClipboardList className="text-vert-olive dark:text-vert-sauge" />, color: 'text-vert-foret' },
     { label: 'Clients enregistrés', value: stats.clientCount, icon: <Users className="text-vert-olive dark:text-vert-sauge" />, color: 'text-vert-foret' },
-    { label: 'Notes en attente', value: stats.noteCount, icon: <StickyNote className="text-vert-olive dark:text-vert-sauge" />, color: 'text-vert-foret' },
+
   ];
 
   return (
@@ -115,16 +112,7 @@ const Dashboard: React.FC = () => {
               </div>
               <Users size={20} className="group-hover:translate-x-1 transition-transform opacity-60" />
             </button>
-            <button 
-              onClick={() => navigate('/notes')}
-              className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 border border-vert-foret dark:border-slate-800 text-vert-foret dark:text-slate-200 rounded-2xl hover:bg-rose-poudre dark:hover:bg-slate-800 transition-all group active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-rose-poudre dark:bg-slate-800 rounded-lg"><StickyNote size={24} /></div>
-                <span className="font-bold text-lg">Prendre une Note</span>
-              </div>
-              <StickyNote size={20} className="group-hover:translate-x-1 transition-transform opacity-60" />
-            </button>
+
           </div>
         </div>
 
