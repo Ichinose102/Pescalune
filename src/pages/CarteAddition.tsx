@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Minus, Search, CheckCircle2, ClipboardList, X } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { fetchPrestations, fetchClients, createAddition } from '../api';
 
 const CarteAddition: React.FC = () => {
@@ -82,6 +84,54 @@ const CarteAddition: React.FC = () => {
       console.error("Validation error", error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // PDF export/share functions
+  const generatePdfBlob = async () => {
+    const el = document.getElementById('addition-to-print');
+    if (!el) throw new Error('Element addition not found');
+    const canvas = await html2canvas(el as HTMLElement, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const imgProps = (pdf as any).getImageProperties ? (pdf as any).getImageProperties(imgData) : { width: canvas.width, height: canvas.height };
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    return pdf.output('blob');
+  };
+
+  const handleExportPdf = async () => {
+    try {
+      const blob = await generatePdfBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `addition-${Date.now()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF export error', err);
+    }
+  };
+
+  const handleSharePdf = async () => {
+    try {
+      const blob = await generatePdfBlob();
+      const file = new File([blob], `addition-${Date.now()}.pdf`, { type: 'application/pdf' });
+      if (navigator.canShare && (navigator as any).canShare({ files: [file] })) {
+        await (navigator as any).share({ files: [file], title: 'Addition', text: 'Voici l\'addition' });
+      } else {
+        // fallback to download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Share error', err);
     }
   };
 
@@ -182,7 +232,7 @@ const CarteAddition: React.FC = () => {
       </div>
 
       {/* Cart Section */}
-      <div className="w-full xl:w-96 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl shadow-2xl border border-vert-sauge/20 dark:border-slate-800 flex flex-col h-fit sticky top-0 xl:relative animate-slide-up">
+      <div id="addition-to-print" className="w-full xl:w-96 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl shadow-2xl border border-vert-sauge/20 dark:border-slate-800 flex flex-col h-fit sticky top-0 xl:relative animate-slide-up">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-vert-foret dark:text-slate-100 flex items-center gap-2">
             <ClipboardList size={22} className="text-vert-olive" />
@@ -238,20 +288,27 @@ const CarteAddition: React.FC = () => {
             <span className="text-3xl font-black text-vert-foret dark:text-slate-100">{total.toFixed(2)}€</span>
           </div>
           
-          <button 
-            onClick={handleValidate} 
-            disabled={cart.length === 0 || isSubmitting} 
-            className="btn-primary w-full py-4 text-lg shadow-xl shadow-vert-olive/20 disabled:opacity-50 disabled:active:scale-100"
-          >
-            {isSubmitting ? (
-              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            ) : (
-              <>
-                <CheckCircle2 size={24} />
-                Valider l'Addition
-              </>
-            )}
-          </button>
+          <div className="space-y-3">
+            <button 
+              onClick={handleValidate} 
+              disabled={cart.length === 0 || isSubmitting} 
+              className="btn-primary w-full py-4 text-lg shadow-xl shadow-vert-olive/20 disabled:opacity-50 disabled:active:scale-100"
+            >
+              {isSubmitting ? (
+                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <CheckCircle2 size={24} />
+                  Valider l'Addition
+                </>
+              )}
+            </button>
+
+            <div className="flex gap-2">
+              <button onClick={handleExportPdf} disabled={cart.length === 0} className="w-1/2 py-3 bg-vert-olive text-white rounded-xl font-bold">Exporter en PDF</button>
+              <button onClick={handleSharePdf} disabled={cart.length === 0} className="w-1/2 py-3 bg-rose-poudre dark:bg-slate-800 rounded-xl font-bold">Partager</button>
+            </div>
+          </div>
           
           {successMessage && (
             <div className="p-3 bg-green-500/10 text-green-600 dark:text-green-400 text-center rounded-xl text-sm font-bold animate-fade-in flex items-center justify-center gap-2">

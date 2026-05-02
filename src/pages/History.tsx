@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User, CreditCard, ChevronRight, X, Trash2, Receipt, Clock, Search, Calendar } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { fetchAdditions, fetchAdditionItems, deleteAddition } from '../api';
 
 interface Addition {
@@ -67,6 +69,57 @@ const History: React.FC = () => {
       } catch (error) {
         alert("Erreur lors de la suppression.");
       }
+    }
+  };
+
+  // PDF export/share helpers for History modal (captures the detail view)
+  const generatePdfBlob = async (additionId: number) => {
+    const el = document.getElementById(`addition-${additionId}`);
+    if (!el) throw new Error('Element addition not found');
+    const canvas = await html2canvas(el as HTMLElement, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const imgProps = (pdf as any).getImageProperties ? (pdf as any).getImageProperties(imgData) : { width: canvas.width, height: canvas.height };
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    return pdf.output('blob');
+  };
+
+  const handleExportPdf = async () => {
+    if (!selectedAddition) return;
+    try {
+      const blob = await generatePdfBlob(selectedAddition.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `addition-${selectedAddition.id}-${Date.now()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF export error', err);
+      alert('Impossible d\'exporter la PDF.');
+    }
+  };
+
+  const handleSharePdf = async () => {
+    if (!selectedAddition) return;
+    try {
+      const blob = await generatePdfBlob(selectedAddition.id);
+      const file = new File([blob], `addition-${selectedAddition.id}-${Date.now()}.pdf`, { type: 'application/pdf' });
+      if (navigator.canShare && (navigator as any).canShare({ files: [file] })) {
+        await (navigator as any).share({ files: [file], title: 'Addition', text: 'Voici l\'addition' });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Share error', err);
+      alert('Impossible de partager la PDF.');
     }
   };
 
@@ -180,7 +233,7 @@ const History: React.FC = () => {
       {/* Details Modal - Mobile Optimized */}
       {selectedAddition && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-vert-foret/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full h-full md:h-auto md:max-w-2xl md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col animate-slide-up">
+          <div id={`addition-${selectedAddition.id}`} className="bg-white dark:bg-slate-900 w-full h-full md:h-auto md:max-w-2xl md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col animate-slide-up">
             <div className="p-5 md:p-7 border-b border-rose-poudre dark:border-slate-800 flex justify-between items-center bg-vert-foret dark:bg-slate-800 text-rose-poudre">
               <div className="flex items-center gap-3 md:gap-5">
                 <div className="p-3 bg-white/10 rounded-2xl hidden sm:block"><Receipt size={24} /></div>
@@ -260,6 +313,10 @@ const History: React.FC = () => {
             </div>
 
             <div className="p-6 md:p-8 bg-rose-poudre/10 dark:bg-slate-900 border-t border-rose-poudre dark:border-slate-800">
+               <div className="flex gap-3 mb-3">
+                 <button onClick={handleExportPdf} className="flex-1 py-3 bg-vert-olive text-white rounded-[1.5rem] font-bold">Exporter en PDF</button>
+                 <button onClick={handleSharePdf} className="flex-1 py-3 bg-rose-poudre dark:bg-slate-800 rounded-[1.5rem] font-bold">Partager</button>
+               </div>
                <button 
                 onClick={() => setSelectedAddition(null)}
                 className="btn-primary w-full py-4 md:py-5 text-base rounded-[1.5rem] md:rounded-[2rem] font-black uppercase tracking-[0.2em]"
