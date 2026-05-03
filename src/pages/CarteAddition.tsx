@@ -27,9 +27,9 @@ const CarteAddition: React.FC = () => {
         ]);
         setPrestations(presData || []);
         setClients(clientsData || []);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Load error", err);
-        setError("Erreur serveur.");
+        setError(err.message || "Erreur serveur.");
       } finally {
         setIsLoading(false);
       }
