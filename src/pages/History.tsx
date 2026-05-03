@@ -107,7 +107,9 @@ const History: React.FC = () => {
     try {
       const blob = await generatePdfBlob(selectedAddition.id);
       const file = new File([blob], `addition-${selectedAddition.id}-${Date.now()}.pdf`, { type: 'application/pdf' });
-      if (navigator.canShare && (navigator as any).canShare({ files: [file] })) {
+      
+      // Correction de l'erreur TS2774
+      if (typeof navigator.canShare === 'function' && (navigator as any).canShare({ files: [file] })) {
         await (navigator as any).share({ files: [file], title: 'Addition', text: 'Voici l\'addition' });
       } else {
         const url = URL.createObjectURL(blob);
@@ -219,9 +221,9 @@ const History: React.FC = () => {
                    <button 
                     onClick={(e) => handleDelete(e, addition.id)}
                     className="p-2.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all md:opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                   >
+                     <Trash2 size={18} />
+                   </button>
                   <ChevronRight size={20} className="text-vert-sauge group-hover:translate-x-1 transition-transform hidden md:block" />
                 </div>
               </div>

@@ -119,7 +119,9 @@ const CarteAddition: React.FC = () => {
     try {
       const blob = await generatePdfBlob();
       const file = new File([blob], `addition-${Date.now()}.pdf`, { type: 'application/pdf' });
-      if (navigator.canShare && (navigator as any).canShare({ files: [file] })) {
+      
+      // Correction de l'erreur TS2774
+      if (typeof navigator.canShare === 'function' && (navigator as any).canShare({ files: [file] })) {
         await (navigator as any).share({ files: [file], title: 'Addition', text: 'Voici l\'addition' });
       } else {
         // fallback to download
