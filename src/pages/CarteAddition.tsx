@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Minus, Search, CheckCircle2, ClipboardList, X } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { fetchPrestations, fetchClients, createAddition } from '../api';
+import { fetchClients, createAddition } from '../api';
+import { PRESTATIONS } from '../data/menu';
 
 const CarteAddition: React.FC = () => {
-  const [prestations, setPrestations] = useState<any[]>([]);
+  const [prestations] = useState(PRESTATIONS);
   const [clients, setClients] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<number | ''>('');
@@ -21,15 +22,11 @@ const CarteAddition: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const [presData, clientsData] = await Promise.all([
-          fetchPrestations(),
-          fetchClients()
-        ]);
-        setPrestations(presData || []);
+        const clientsData = await fetchClients();
         setClients(clientsData || []);
       } catch (err: any) {
         console.error("Load error", err);
-        setError(err.message || "Erreur serveur.");
+        setError(err.message || "Erreur lors du chargement des clients.");
       } finally {
         setIsLoading(false);
       }
