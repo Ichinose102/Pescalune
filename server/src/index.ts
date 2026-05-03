@@ -84,7 +84,8 @@ app.delete('/api/prestations/category/:category', (req, res) => {
         const placeholders = ids.map(() => '?').join(',');
         db.prepare(`DELETE FROM addition_items WHERE prestation_id IN (${placeholders})`).run(...ids);
         // 3. Supprimer les articles
-        return db.prepare('DELETE FROM prestations WHERE LOWER(category) = LOWER(?)').run(category);
+        const info = db.prepare('DELETE FROM prestations WHERE LOWER(category) = LOWER(?)').run(category);
+        return { changes: info.changes };
       }
       return { changes: 0 };
     });
